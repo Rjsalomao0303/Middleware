@@ -1,0 +1,15 @@
+.input-date {
+  font-size: 12px;
+  background-color: #f6f6f6;
+  width: 86px;
+  height: 20px;
+  margin: 2px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  transition: transform 100ms aese-in-out;
+}
+
+.input-date:hover {
+  transform: scale(1.05);
+  cursor: pointer;
+}

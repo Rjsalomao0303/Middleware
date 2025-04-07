@@ -1,0 +1,64 @@
+.input-password-container {
+  display: flex;
+  margin-top: 10px;
+  align-items: center;
+  position: relative;
+}
+
+.input-senha {
+  font-size: 10px;
+  background-color: #f6f6f6;
+  height: 20px;
+  padding: 5px;
+  margin: 2px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  transition: transform 100ms aese-in-out;
+}
+
+.input-senha:hover {
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+.btnVisible {
+  position: absolute;
+  top: 0px;
+  right: 10px;
+  background-color: #fff;
+}
+
+.visivelImg {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.input-label-senha {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  pointer-events: none;
+  transition: top 0.3ms, font-size 0.3ms;
+  font-size: 14px;
+  color: #666;
+}
+
+.btnVisible {
+  border: none;
+  top: -8px;
+  background-color: transparent;
+}
+
+.visivelImg {
+ width: 25px;
+ height: auto;
+ background-color: transparent;
+}
+
+.input-text:focus + .input-label-senha,
+.input-text:valid + .input-label-senha {
+  top: -10px;
+  font-size: 12px;
+  color: #333;
+}

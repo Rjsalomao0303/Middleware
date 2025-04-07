@@ -1,0 +1,40 @@
+.button {
+  height: 25px;
+  margin: 2px;
+  font-size: 12px;
+  font-weight: bold;
+  background-color: #007bff;
+  color: #fff;
+  padding: 0px 15px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.4); /* Sombra de elevação */
+  transform: scale(1);
+  transition: transform 0.2s;
+  border-radius: 5px;
+}
+
+.button:active {
+  box-shadow: none;  /* Remover sombra quando clicado */
+  transform: scale(0.98); /* Escala menor quando clicado */
+  border-radius: 5px;
+}
+
+.button:hover {
+  background-color: #0069d9;
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+.button:focus {
+  outline: 2px solid #5c5c5c; /* Cor e estilo da borda em foco */
+  border-radius: 5px;
+}
+
+.button:disabled {
+  background-color: #cccccc; /* Cor de fundo desativado */
+  color: #666666; /* Cor do texto desativado */
+  cursor: not-allowed; /* Cursor desativado */
+  box-shadow: none; /* Remover sombra */
+  transform: none; /* Sem transformação */
+}

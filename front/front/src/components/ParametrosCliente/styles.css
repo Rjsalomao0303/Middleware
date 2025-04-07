@@ -1,0 +1,71 @@
+.container {
+  /* border: 1px solid black; */
+  /* background-color: green; */
+}
+
+.logo {
+  position: absolute;
+  width: 150px;
+  height: auto;
+  top: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.corpo {
+  top: 80px;
+}
+
+.container-gesthor {
+  position: relative;
+  margin-top: 0px;
+}
+
+.label-gesthor {
+  text-align: center;
+}
+
+.input-wrapper {
+  /* background-color: green; */
+}
+
+.container-gesthor-horarios {
+  /* border: 1px solid black; */
+  /* background-color: green; */
+}
+
+.label-gesthor-horarios {
+  text-align: center;
+}
+
+.container-omniplus {
+  /* border: 1px solid black; */
+  /* background-color: green; */
+}
+
+.label-omniplus {
+  text-align: center;
+}
+
+.container-omniplus-templates {
+  display: flex;
+  position: relative;
+}
+
+.container-omniplus-templates-tipos {
+  position: relative;
+  width: 65%;
+}
+
+.container-omniplus-templates-dias {
+  position: relative;
+  width: 35%;
+}
+
+.btnSalvar {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: 5px;
+  height: 70px;
+}

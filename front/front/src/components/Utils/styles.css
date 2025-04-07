@@ -1,0 +1,4 @@
+.toast-custom-top-right {
+    top: 50px !important; /* Ajuste este valor conforme necessário */
+    right: 4px !important; /* Posição padrão do Toastr */
+}

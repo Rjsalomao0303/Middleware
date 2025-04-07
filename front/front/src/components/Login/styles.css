@@ -1,0 +1,47 @@
+.container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  /* background-color: blue; */
+}
+
+.logo {
+  position: absolute;
+  width: 150px;
+  height: auto;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.corpo{
+  position: absolute;
+  margin-top: 40px;
+  top: 150px;
+  min-width: 30%;
+  max-width: 90%;
+  height: calc(100vh - 700px);
+  margin-left: 5%;
+  margin-right: 5%;
+  /* background-color: blue; */
+}
+
+.input-text:focus + .input-label,
+.input-text:valid + .input-label {
+  top: -40px;
+  font-size: 12px;
+  color: #333;
+}
+
+.btnLogar {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.button {
+  width: 150px;
+}

@@ -214,6 +214,7 @@ async def executar_tarefas(connection, dominio_gesthor, periodo, cliente_id_gest
                     for agenda in agendas:
                         agenda_id = agenda['ID']  
 
+                        # Deixar essa opção habilitada apenas se for fazer teste de validação
                         if agenda_id != 33 and dominio_gesthor == 'hospitalolhos.gesthor.falehandix.com.br':
                              continue  # Pula para a próxima iteração se o ID não for 33
                         
@@ -403,6 +404,7 @@ async def fetch_records_to_send(connection):
         FROM tb_controle AS c
         WHERE c.numero_contato = a.numero_contato
         AND c.dominio_omniplus = a.dominio_omniplus
+        AND TO_DATE(c.data, 'DD/MM/YYYY') >= CURRENT_DATE
         AND c.status = 1
     )
     """
@@ -757,8 +759,7 @@ async def consultaLogs(request):
     try:
         # Obter o cabeçalho de autorização
         auth_header = request.headers.get('Authorization', '')
-        token = auth_header.split(
-            ' ')[1] if auth_header.startswith('Bearer ') else None
+        token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
 
         logging.debug("Requisição de consulta recebida.")
 
@@ -802,32 +803,71 @@ async def consultaLogs(request):
                 "Consulta no banco de dados logs com parâmetros de filtros.")
 
             # Montagem da query com parâmetros dinâmicos
-            query = """
-                SELECT time, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, status, confirmacao
-                FROM tb_log
+            query = """ WITH UltimosRegistros AS (
+                SELECT
+                    a.codigo_paciente,
+                    a.nome_paciente,
+                    CASE
+                        WHEN LENGTH(a.numero_contato::TEXT) = 13 AND a.numero_contato::TEXT LIKE '55%' THEN
+                            SUBSTRING(a.numero_contato::TEXT FROM 1 FOR 2) || ' ' ||
+                            SUBSTRING(a.numero_contato::TEXT FROM 3 FOR 2) || ' ' ||
+                            SUBSTRING(a.numero_contato::TEXT FROM 5 FOR 1) || '.' ||
+                            SUBSTRING(a.numero_contato::TEXT FROM 6 FOR 4) || '-' ||
+                            SUBSTRING(a.numero_contato::TEXT FROM 10 FOR 4)
+                        WHEN LENGTH(a.numero_contato::TEXT) = 12 AND a.numero_contato::TEXT LIKE '55%' THEN
+                            SUBSTRING(a.numero_contato::TEXT FROM 1 FOR 2) || ' ' ||
+                            SUBSTRING(a.numero_contato::TEXT FROM 3 FOR 2) || ' ' ||
+                            SUBSTRING(a.numero_contato::TEXT FROM 5 FOR 4) || '-' ||
+                            SUBSTRING(a.numero_contato::TEXT FROM 9 FOR 4)
+                        ELSE
+                            a.numero_contato::TEXT
+                    END AS numero_contato_formatado,
+                    a.codigo_agendamento,
+                    a.tipo_agendamento,
+                    CASE
+                        WHEN a.tipo_agendamento = 'C' THEN 'Consulta'
+                        WHEN a.tipo_agendamento = 'E' THEN 'Exame'
+                        WHEN a.tipo_agendamento = 'R' THEN 'Retorno'
+                        WHEN a.tipo_agendamento = 'P' THEN 'Cirurgia'
+                        ELSE '*'
+                    END AS descricao_tipo_agendamento,
+                    TO_CHAR(a.time, 'DD/MM/YYYY HH24:MI') || 'h' AS time_formatado,
+                    a.status,
+                    a.confirmacao,
+                    CASE
+                        WHEN a.status = '0' THEN 'A enviar'
+                        WHEN a.status = '1' THEN 'Enviado'
+                        WHEN a.status = '2' THEN 'Recebido'
+                        WHEN a.status = '3' THEN 'Respondido'
+                        ELSE '*'
+                    END AS descricao_status,
+                    a.time,
+                    ROW_NUMBER() OVER(PARTITION BY a.codigo_agendamento ORDER BY a.time DESC) as rn
+                FROM
+                    tb_log a
                 WHERE 1=1
             """
             query_params = []  # Lista para armazenar os parâmetros da query
+            where_clauses = [] # Lista para armazenar as cláusulas WHERE dinâmicas
 
             # Adiciona condições dinâmicas conforme os parâmetros recebidos
             if data_inicio:
-                query += " AND time >= $1"
+                where_clauses.append("a.time >= $1")
                 query_params.append(data_inicio)
 
             if data_fim:
-                query += f" AND time <= ${len(query_params) + 1}"
+                where_clauses.append(f"a.time <= ${len(query_params) + 1}")
                 query_params.append(data_fim)
 
             if dominio:
-                query += f" AND dominio_omniplus ILIKE ${len(query_params) + 1}"
+                where_clauses.append(f"a.dominio_omniplus ILIKE ${len(query_params) + 1}")
                 query_params.append(f"%{dominio}%")
 
             # Verificação e conversão do número de contato para int
             if numero_contato:
                 try:
-                    # Tentar converter o numero_contato para int
                     numero_contato = int(numero_contato)
-                    query += f" AND numero_contato = ${len(query_params) + 1}"
+                    where_clauses.append(f"a.numero_contato = ${len(query_params) + 1}")
                     query_params.append(numero_contato)
                 except ValueError:
                     logging.error(
@@ -839,11 +879,37 @@ async def consultaLogs(request):
                     }, status=400)
 
             if nome_paciente:
-                query += f" AND nome_paciente ILIKE ${len(query_params) + 1}"
+                where_clauses.append(f"a.nome_paciente ILIKE ${len(query_params) + 1}")
                 query_params.append(f"%{nome_paciente}%")
 
-            # Adiciona a cláusula ORDER BY e LIMIT
-            query += f" ORDER BY time DESC LIMIT ${len(query_params) + 1}"
+            # Adiciona as cláusulas WHERE à query da CTE
+            if where_clauses:
+                query += " AND " + " AND ".join(where_clauses)
+
+            # Finaliza a query principal para selecionar os últimos registros
+            query += f"""
+            )
+            SELECT
+                codigo_paciente,
+                nome_paciente,
+                numero_contato_formatado,
+                codigo_agendamento,
+                tipo_agendamento,
+                descricao_tipo_agendamento,
+                time_formatado,
+                status,
+                confirmacao,
+                descricao_status
+            FROM
+                UltimosRegistros
+            WHERE
+                rn = 1
+            ORDER BY
+                nome_paciente,
+                time,
+                codigo_agendamento ASC
+            LIMIT ${len(query_params) + 1}
+            """
             query_params.append(limit)
 
             # Função para formatar a query com os parâmetros reais (para depuração)
@@ -905,7 +971,6 @@ async def consultaLogs(request):
             "code": 500,
             "message": "Internal server error."
         }, status=500)
-
 
 # Função Grava ou altera parametros do cliente
 async def parametros(request):

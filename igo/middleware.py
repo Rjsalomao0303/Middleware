@@ -215,8 +215,8 @@ async def executar_tarefas(connection, dominio_gesthor, periodo, cliente_id_gest
                         agenda_id = agenda['ID']  
 
                         # Deixar essa opção habilitada apenas se for fazer teste de validação
-                        if agenda_id != 33 and dominio_gesthor == 'hospitalolhos.gesthor.falehandix.com.br':
-                             continue  # Pula para a próxima iteração se o ID não for 33
+                        #if agenda_id != 33 and dominio_gesthor == 'hospitalolhos.gesthor.falehandix.com.br':
+                        #     continue  # Pula para a próxima iteração se o ID não for 33
                         
                         logging.debug(f"Buscar agendamentos com o AGENDA_ID e intervalo de datas.")
                         data_ini = datetime.now().strftime('%Y-%m-%d')

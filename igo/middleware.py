@@ -1,5 +1,5 @@
 # Handix 
-# Dev: Ricardo J. Salomão 07/04/2025 v1.2
+# Dev: Ricardo J. Salomão 07/04/2025 v1.3
 # coding: utf-8
 
 import os
@@ -135,7 +135,7 @@ async def fetch(session, url, headers):
             logging.error(f"Erro ao conectar à API: status {response.status}")
             return None
 
-async def insert_controle(connection, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, data, horario, url_origem):
+async def insert_controle(connection, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, data, horario, url_origem, agenda):
     """Insere os dados na tabela tb_controle."""
     logging.debug("Insere os dados na tabela tb_controle.")
     try:
@@ -151,22 +151,22 @@ async def insert_controle(connection, dominio_omniplus, numero_contato, codigo_p
         
         # Se não existir, insere o novo registro
         await connection.execute("""
-            INSERT INTO tb_controle (dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, data, horario, url_origem, status, confirmacao)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, 'nao')
-        """, dominio_omniplus, int(numero_contato), int(codigo_paciente), nome_paciente, tipo_agendamento, int(codigo_agendamento), data, horario, url_origem)
+            INSERT INTO tb_controle (dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, data, horario, url_origem, status, confirmacao, agenda)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, 'nao', $10)
+        """, dominio_omniplus, int(numero_contato), int(codigo_paciente), nome_paciente, tipo_agendamento, int(codigo_agendamento), data, horario, url_origem, agenda)
         
     except Exception as e:
         logging.error(f"Ocorreu um erro ao inserir na tabela tb_controle: {e}")
         raise
 
-async def insert_log(connection, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, status, confirmacao):
+async def insert_log(connection, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, status, confirmacao, agenda):
     """Insere os dados na tabela tb_log."""
     logging.debug("Insere os dados na tabela tb_log.")
     try:
         await connection.execute("""
-        INSERT INTO tb_log (time, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, status, confirmacao)
-        VALUES (now(), $1, $2, $3, $4, $5, $6, $7, $8)
-        """, dominio_omniplus, int(numero_contato), int(codigo_paciente), nome_paciente, tipo_agendamento, int(codigo_agendamento), status, confirmacao)
+        INSERT INTO tb_log (time, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, status, confirmacao, agenda)
+        VALUES (now(), $1, $2, $3, $4, $5, $6, $7, $8, $9)
+        """, dominio_omniplus, int(numero_contato), int(codigo_paciente), nome_paciente, tipo_agendamento, int(codigo_agendamento), status, confirmacao, agenda)
     except Exception as e:
         logging.error(f"Ocorreu um erro ao inserir na tabela tb_log: {e}")
         raise
@@ -215,8 +215,8 @@ async def executar_tarefas(connection, dominio_gesthor, periodo, cliente_id_gest
                         agenda_id = agenda['ID']  
 
                         # Deixar essa opção habilitada apenas se for fazer teste de validação
-                        #if agenda_id != 33 and dominio_gesthor == 'hospitalolhos.gesthor.falehandix.com.br':
-                        #     continue  # Pula para a próxima iteração se o ID não for 33
+                        if agenda_id != 33 and dominio_gesthor == 'hospitalolhos.gesthor.falehandix.com.br':
+                             continue  # Pula para a próxima iteração se o ID não for 33
                         
                         logging.debug(f"Buscar agendamentos com o AGENDA_ID e intervalo de datas.")
                         data_ini = datetime.now().strftime('%Y-%m-%d')
@@ -318,8 +318,8 @@ async def executar_tarefas(connection, dominio_gesthor, periodo, cliente_id_gest
                                 logging.debug(f"Exame: {agendamento.get('EXAME', 'N/A')}")
                                 logging.debug("===========================================================================================")
 
-                                await insert_controle(connection, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, data, horario, url_origem)
-                                await insert_log(connection, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, 0, 'nao')
+                                await insert_controle(connection, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, data, horario, url_origem, agenda_id)
+                                await insert_log(connection, dominio_omniplus, numero_contato, codigo_paciente, nome_paciente, tipo_agendamento, codigo_agendamento, 0, 'nao', agenda_id)
 
                             else:
                                 logging.debug(f"Nenhuma agenda encontrada para o Convênio ID {convenio_id}.")
@@ -333,7 +333,7 @@ async def update_status_to_sent(connection, record):
     """Atualiza o status para 1 (enviado Omniplus)."""
     logging.debug("Atualiza o status para 1 (enviado Omniplus).")
     await connection.execute("UPDATE tb_controle SET status = 1 WHERE id = $1", record['id'])
-    await insert_log(connection, record['dominio_omniplus'], record['numero_contato'], record['codigo_paciente'], record['nome_paciente'], record['tipo_agendamento'], record['codigo_agendamento'], 1, 'nao')
+    await insert_log(connection, record['dominio_omniplus'], record['numero_contato'], record['codigo_paciente'], record['nome_paciente'], record['tipo_agendamento'], record['codigo_agendamento'], 1, 'nao', record['agenda'])
 
 async def send_data_to_omniplus(record):
     """Envia dados para a API Omniplus."""
@@ -393,7 +393,7 @@ async def fetch_records_to_send(connection):
     """Busca registros com status 0, sem duplicatas de domínio e número com status 1."""
     logging.debug("Busca registros com status 0, sem duplicatas de domínio e número com status 1.")
     query = """
-    SELECT a.id, a.dominio_omniplus, a.numero_contato, a.codigo_paciente, a.nome_paciente, a.tipo_agendamento, a.codigo_agendamento, a.data, a.horario, a.url_origem, b.bearer_omniplus, b.canal_omniplus, b.template_consulta, b.template_exame, b.template_retorno, b.template_cirurgia
+    SELECT a.id, a.dominio_omniplus, a.numero_contato, a.codigo_paciente, a.nome_paciente, a.tipo_agendamento, a.codigo_agendamento, a.data, a.horario, a.url_origem, a.agenda, b.bearer_omniplus, b.canal_omniplus, b.template_consulta, b.template_exame, b.template_retorno, b.template_cirurgia
     FROM tb_controle a
     JOIN tb_cliente b ON a.url_origem = b.dominio_gesthor
     WHERE a.status = 0
@@ -514,7 +514,7 @@ async def handle_return(request):
             # Consulta para buscar o registro relevante
             logging.debug("Consulta para buscar o registro relevante.")
             query = """
-            SELECT a.id, a.dominio_omniplus, a.numero_contato, a.codigo_paciente, a.nome_paciente, a.tipo_agendamento, a.codigo_agendamento, 
+            SELECT a.id, a.dominio_omniplus, a.numero_contato, a.codigo_paciente, a.nome_paciente, a.tipo_agendamento, a.codigo_agendamento, a.agenda,
                    b.dominio_gesthor, b.cliente_id_gesthor, b.bearer_gesthor
             FROM tb_controle a
             JOIN tb_cliente b ON a.url_origem = b.dominio_gesthor
@@ -539,7 +539,7 @@ async def handle_return(request):
 
             # Insere o log
             await insert_log(connection, record['dominio_gesthor'], int(record['numero_contato']), str(record['codigo_paciente']), 
-                             record['nome_paciente'], record['tipo_agendamento'], int(record['codigo_agendamento']), 2, confirma)
+                             record['nome_paciente'], record['tipo_agendamento'], int(record['codigo_agendamento']), 2, confirma, int(record['agenda']))
 
             # Envia os dados para o Gesthor
             success = await send_to_gesthor(record, confirma)
@@ -549,7 +549,7 @@ async def handle_return(request):
             if success:
                 # Insere o log
                 await insert_log(connection, record['dominio_gesthor'], int(record['numero_contato']), str(record['codigo_paciente']), 
-                             record['nome_paciente'], record['tipo_agendamento'], int(record['codigo_agendamento']), 3, confirma)
+                             record['nome_paciente'], record['tipo_agendamento'], int(record['codigo_agendamento']), 3, confirma, int(record['agenda']))
                 return web.json_response({
                     "status": "success",
                     "code": 200,
@@ -777,6 +777,7 @@ async def consultaLogs(request):
         data_inicio = params.get('dataInicio')
         data_fim = params.get('dataFim')
         dominio = params.get('dominio')
+        agenda = params.get('agenda')
         numero_contato = params.get('numeroContato')
         nome_paciente = params.get('nomePaciente')
         limit = int(params.get('limit', 100))
@@ -822,6 +823,7 @@ async def consultaLogs(request):
                         ELSE
                             a.numero_contato::TEXT
                     END AS numero_contato_formatado,
+                    a.agenda,
                     a.codigo_agendamento,
                     a.tipo_agendamento,
                     CASE
@@ -862,6 +864,21 @@ async def consultaLogs(request):
             if dominio:
                 where_clauses.append(f"a.dominio_omniplus ILIKE ${len(query_params) + 1}")
                 query_params.append(f"%{dominio}%")
+                
+            # Verificação e conversão do número de contato para int
+            if agenda:
+                try:
+                    agenda = int(agenda)
+                    where_clauses.append(f"a.agenda = ${len(query_params) + 1}")
+                    query_params.append(agenda)
+                except ValueError:
+                    logging.error(
+                        f"Erro: agenda '{agenda}' não é um número inteiro válido.")
+                    return web.json_response({
+                        "status": "error",
+                        "code": 400,
+                        "message": "Invalid agenda format. Must be an integer."
+                    }, status=400)
 
             # Verificação e conversão do número de contato para int
             if numero_contato:
@@ -893,6 +910,7 @@ async def consultaLogs(request):
                 codigo_paciente,
                 nome_paciente,
                 numero_contato_formatado,
+                agenda,
                 codigo_agendamento,
                 tipo_agendamento,
                 descricao_tipo_agendamento,

@@ -1,4 +1,8 @@
-/* styles.css */
+/* 
+  styles.css
+  Handix 
+  Dev: Ricardo J. Salomão 07/04/2025 v1.3
+*/
 .container {
   display: flex;
   flex-direction: column;
@@ -9,7 +13,7 @@
 
 .corpo-consulta {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 15px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -26,7 +30,8 @@
 .label-resultados {
   font-size: 1.5em;
   color: #333;
-  margin-bottom: 10px;
+  margin-top: 5px;
+  margin-bottom: 5px;
   text-align: left;
   width: 100%;
 }
@@ -34,13 +39,14 @@
 .filtro-header {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   flex-wrap: wrap;
   align-items: center;
 }
 
 .consulta-input {
   padding: 8px;
+  margin: 2px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }

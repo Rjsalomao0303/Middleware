@@ -1,3 +1,6 @@
+// Handix 
+// Dev: Ricardo J. Salomão 06/05/2025 v1.3
+
 const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
 export async function buscaLogs(filters, limit) {
@@ -7,6 +10,7 @@ export async function buscaLogs(filters, limit) {
         dataInicio: filters.dataInicio || '',
         dataFim: filters.dataFim || '',
         dominio: filters.dominio || '',
+        agenda: filters.agenda || '',
         numeroContato: filters.numeroContato || '',
         nomePaciente: filters.nomePaciente || '',
         limit: limit || 100

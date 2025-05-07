@@ -117,6 +117,14 @@ const ConsultaLogs = () => {
             />
             <input
               type='text'
+              name='agenda'
+              value={filters.agenda}
+              onChange={handleFilterChange}
+              className='consulta-input'
+              placeholder='Agenda'
+            />
+            <input
+              type='text'
               name='numeroContato'
               value={filters.numeroContato}
               onChange={handleFilterChange}
@@ -145,8 +153,9 @@ const ConsultaLogs = () => {
               <table>
                 <thead>
                   <tr>
-                    <th style={{ width: '30%', textAlign: 'left' }}>Paciente</th>
+                    <th style={{ width: '25%', textAlign: 'left' }}>Paciente</th>
                     <th style={{ width: '15%', textAlign: 'center' }}>Telefone</th>
+                    <th style={{ width: '5%', textAlign: 'center' }}>Agenda</th>
                     <th style={{ width: '10%', textAlign: 'center' }}>Agendamento</th>
                     <th style={{ width: '10%', textAlign: 'left' }}>Tipo</th>
                     <th style={{ width: '15%', textAlign: 'center' }}>Data/Hora</th>
@@ -159,6 +168,7 @@ const ConsultaLogs = () => {
                     <tr key={log.time}>
                       <td style={{ textAlign: 'left' }}>{log.codigo_paciente}-{log.nome_paciente}</td>
                       <td style={{ textAlign: 'center' }}>{log.numero_contato_formatado}</td>
+                      <td style={{ textAlign: 'center' }}>{log.agenda}</td>
                       <td style={{ textAlign: 'center' }}>{log.codigo_agendamento}</td>
                       <td style={{ textAlign: 'left' }}>{log.tipo_agendamento}-{log.descricao_tipo_agendamento}</td>
                       <td style={{ textAlign: 'center' }}>{log.time_formatado}</td>
